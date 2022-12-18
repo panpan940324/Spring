@@ -154,7 +154,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 
 
 	static {
-		// 优先加载上下文关闭事件来防止奇怪的类加载问题再应用程序关闭的时候
+		// 优先加载上下文关闭事件来防止奇怪的类加载问题在应用程序关闭的时候
 		// Eagerly load the ContextClosedEvent class to avoid weird classloader issues
 		// on application shutdown in WebLogic 8.1. (Reported by Dustin Woods.)
 		ContextClosedEvent.class.getName();
@@ -225,9 +225,11 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 
 
 	/**
+	 * 创建一个无父类的AbstractApplicationContext对象
 	 * Create a new AbstractApplicationContext with no parent.
 	 */
 	public AbstractApplicationContext() {
+		// 创建一个资源模式处理器
 		this.resourcePatternResolver = getResourcePatternResolver();
 	}
 
@@ -316,6 +318,8 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	 */
 	@Override
 	public ConfigurableEnvironment getEnvironment() {
+		// 这个环境变量在那个地方创建的？
+		// 在处理资源路径的时候创建了一个StandardEnvironment()
 		if (this.environment == null) {
 			this.environment = createEnvironment();
 		}
@@ -443,6 +447,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	}
 
 	/**
+	 * 返回一个资源模式处理器用来处理资源实例（PathMatchingResourcePatternResolver）
 	 * Return the ResourcePatternResolver to use for resolving location patterns
 	 * into Resource instances. Default is a
 	 * {@link org.springframework.core.io.support.PathMatchingResourcePatternResolver},
@@ -457,7 +462,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	 * @see org.springframework.core.io.support.PathMatchingResourcePatternResolver
 	 */
 	protected ResourcePatternResolver getResourcePatternResolver() {
-		return new PathMatchingResourcePatternResolver(this);
+ 		return new PathMatchingResourcePatternResolver(this);
 	}
 
 
@@ -518,9 +523,20 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	public void refresh() throws BeansException, IllegalStateException {
 		synchronized (this.startupShutdownMonitor) {
 			// Prepare this context for refreshing.
+			/*
+			 * 前戏：做容器刷新前的准备工作
+			 * 1. 设置容器的启动时间
+			 * 2. 设置容器的活跃状态为true，关闭状态为false
+			 * 3. 获取Environment对象，并验证需要的属性是否都已经放入到了环境中
+			 * 4. 准备监听器和时间集合对象，默认为空集合
+			 */
 			prepareRefresh();
 
 			// Tell the subclass to refresh the internal bean factory.
+			/*
+			 * 创建容器对象：DefaultListableBeanFactory
+			 * 加载xml配置文件的属性值到当前工厂中，最重要的就是beanDefinition
+			 */
 			ConfigurableListableBeanFactory beanFactory = obtainFreshBeanFactory();
 
 			// Prepare the bean factory for use in this context.
@@ -599,24 +615,35 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 		}
 
 		// Initialize any placeholder property sources in the context environment.
+		// 留给子类覆盖， 初始化属性资源(重点，可以用来拓展的点)
 		initPropertySources();
 
 		// Validate that all properties marked as required are resolvable:
 		// see ConfigurablePropertyResolver#setRequiredProperties
+		// 创建并获取环境对象，验证需要的属性是否都已经放入到了环境中
 		getEnvironment().validateRequiredProperties();
 
+		/*
+		 * 什么是监听器，监听器事件？
+		 * 事件机制是Spring的重要功能之一，其是基于观察者模式
+		 * 简单来所，就是一个地方发出个通知，很多其他地方能收到通知并做出相应的动作
+ 		 */
+
 		// Store pre-refresh ApplicationListeners...
+		// 判断刷新前的应用监听器集合是否为空，如果为空，则将监听器添加到此集合中（难点，SpringBoot中有扩展点）
 		if (this.earlyApplicationListeners == null) {
 			this.earlyApplicationListeners = new LinkedHashSet<>(this.applicationListeners);
 		}
 		else {
 			// Reset local application listeners to pre-refresh state.
+			// 如果不等于空，则清空集合元素对象
 			this.applicationListeners.clear();
 			this.applicationListeners.addAll(this.earlyApplicationListeners);
 		}
 
 		// Allow for the collection of early ApplicationEvents,
 		// to be published once the multicaster is available...
+		// 创建刷新前的监听事件集合
 		this.earlyApplicationEvents = new LinkedHashSet<>();
 	}
 
@@ -636,7 +663,9 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	 * @see #getBeanFactory()
 	 */
 	protected ConfigurableListableBeanFactory obtainFreshBeanFactory() {
+		// 初始化beanFactory，进行XML文件读取，并将得到的BeanFactory记录在当前实体的属性中
 		refreshBeanFactory();
+		// 返回当前实体的beanFactory属性
 		return getBeanFactory();
 	}
 
