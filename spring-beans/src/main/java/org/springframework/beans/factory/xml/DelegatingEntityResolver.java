@@ -60,6 +60,14 @@ public class DelegatingEntityResolver implements EntityResolver {
 	 */
 	public DelegatingEntityResolver(@Nullable ClassLoader classLoader) {
 		this.dtdResolver = new BeansDtdResolver();
+		/*
+		 * 当完成这行代码的调用之后，大家神奇的发现了一件事情：
+		 *
+		 * schemaResolver对象的schemaMappings属性完成了赋值操作，但是遍历完成所有的代码后依然没有看到显式调用
+		 * 原因：其实此时的原理非常简单的， 我们在进行debug的时候，因为程序运行期间需要显示当前类的所有信息，
+		 * 所以idea会帮组我们调用toString方法，只不过此过程我们识别不到而已。
+		 */
+
 		this.schemaResolver = new PluggableSchemaResolver(classLoader);
 	}
 

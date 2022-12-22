@@ -79,11 +79,17 @@ public class XmlWebApplicationContext extends AbstractRefreshableWebApplicationC
 	 */
 	@Override
 	protected void loadBeanDefinitions(DefaultListableBeanFactory beanFactory) throws BeansException, IOException {
+		/*
+		 * 适配器模式
+		 *
+		 */
 		// Create a new XmlBeanDefinitionReader for the given BeanFactory.
+		// 对于给定的BeanFactory创建要给新的XmlBeanDefinitionReader
 		XmlBeanDefinitionReader beanDefinitionReader = new XmlBeanDefinitionReader(beanFactory);
 
 		// Configure the bean definition reader with this context's
 		// resource loading environment.
+		// beanDefinitionReader设置一些属性（环境变量， 资源加载器， 实体类处理器）
 		beanDefinitionReader.setEnvironment(getEnvironment());
 		beanDefinitionReader.setResourceLoader(this);
 		beanDefinitionReader.setEntityResolver(new ResourceEntityResolver(this));
