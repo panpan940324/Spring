@@ -154,7 +154,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 
 
 	static {
-		// 优先加载上下文关闭事件来防止奇怪的类加载问题在应用程序关闭的时候
+		// 优先加载上下文关闭事件来防止奇怪的类加载问题在应用程序关闭的时候（webLogic 8.1）
 		// Eagerly load the ContextClosedEvent class to avoid weird classloader issues
 		// on application shutdown in WebLogic 8.1. (Reported by Dustin Woods.)
 		ContextClosedEvent.class.getName();
@@ -225,8 +225,8 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 
 
 	/**
-	 * 创建一个无父类的AbstractApplicationContext对象
 	 * Create a new AbstractApplicationContext with no parent.
+	 * 创建一个无父类的AbstractApplicationContext对象
 	 */
 	public AbstractApplicationContext() {
 		// 创建一个资源模式处理器
@@ -318,7 +318,6 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	 */
 	@Override
 	public ConfigurableEnvironment getEnvironment() {
-		// 这个环境变量在那个地方创建的？
 		// 在处理资源路径的时候创建了一个StandardEnvironment()
 		if (this.environment == null) {
 			this.environment = createEnvironment();
@@ -472,6 +471,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 
 	/**
 	 * Set the parent of this application context.
+	 * 设置应用上下文的父类（这个主要是在SpringMVC的父子容器中加以应用）
 	 * <p>The parent {@linkplain ApplicationContext#getEnvironment() environment} is
 	 * {@linkplain ConfigurableEnvironment#merge(ConfigurableEnvironment) merged} with
 	 * this (child) application context environment if the parent is non-{@code null} and
@@ -534,37 +534,74 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 
 			// Tell the subclass to refresh the internal bean factory.
 			/*
-			 * 创建容器对象：DefaultListableBeanFactory
-			 * 加载xml配置文件的属性值到当前工厂中，最重要的就是beanDefinition
+			 * 告诉子类刷新内部Bean工厂
+			 * 1. 创建容器对象：DefaultListableBeanFactory
+			 * 2. 加载xml配置文件的属性值到当前工厂中，最重要的就是beanDefinition
 			 */
 			ConfigurableListableBeanFactory beanFactory = obtainFreshBeanFactory();
 
 			// Prepare the bean factory for use in this context.
+			/**
+			 * 初始化BeanFactory，设置BeanFactory属性值
+			 *
+			 *
+			 */
 			prepareBeanFactory(beanFactory);
 
 			try {
 				// Allows post-processing of the bean factory in context subclasses.
+				/**
+				 * 允许上下文子类中对Bean工厂进行后置处理（修改Bean的定义信息），需要子类去实现
+				 *
+				 */
 				postProcessBeanFactory(beanFactory);
 
 				// Invoke factory processors registered as beans in the context.
+				/**
+				 * 实例化并执行所有注册的BeanFactoryPostProcessor的bean对象
+				 *
+				 */
 				invokeBeanFactoryPostProcessors(beanFactory);
 
 				// Register bean processors that intercept bean creation.
+				/**
+				 * 在创建Bean对象之前，注册BeanPostProcessor（Bean的后置处理器）
+				 *
+				 */
 				registerBeanPostProcessors(beanFactory);
 
 				// Initialize message source for this context.
+				/**
+				 * 初始化上下文的消息资源（国际化）
+				 *
+				 */
 				initMessageSource();
 
 				// Initialize event multicaster for this context.
+				/**
+				 * 初始化上下文中的事件多播器
+				 *
+				 */
 				initApplicationEventMulticaster();
 
 				// Initialize other special beans in specific context subclasses.
+				/**
+				 * 初始化特定上下文子类中的其他特殊的bean对象（SpringBoot中使用到了）
+				 */
 				onRefresh();
 
 				// Check for listener beans and register them.
+				/**
+				 * 注册监听器
+				 *
+				 */
 				registerListeners();
 
 				// Instantiate all remaining (non-lazy-init) singletons.
+				/**
+				 * 实例化所有非懒加载的单例Bean（重要！！！）
+				 *
+				 */
 				finishBeanFactoryInitialization(beanFactory);
 
 				// Last step: publish corresponding event.
@@ -615,7 +652,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 		}
 
 		// Initialize any placeholder property sources in the context environment.
-		// 留给子类覆盖， 初始化属性资源(重点，可以用来拓展的点)
+		// 留给子类覆盖，初始化属性资源(重点，可以用来拓展的点)
 		initPropertySources();
 
 		// Validate that all properties marked as required are resolvable:
@@ -630,6 +667,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
  		 */
 
 		// Store pre-refresh ApplicationListeners...
+		// 存储预刷新的应用监听器（ApplicationListeners）
 		// 判断刷新前的应用监听器集合是否为空，如果为空，则将监听器添加到此集合中（难点，SpringBoot中有扩展点）
 		if (this.earlyApplicationListeners == null) {
 			this.earlyApplicationListeners = new LinkedHashSet<>(this.applicationListeners);

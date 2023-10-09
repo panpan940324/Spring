@@ -78,6 +78,7 @@ public class ClassPathXmlApplicationContext extends AbstractXmlApplicationContex
 	/**
 	 * Create a new ClassPathXmlApplicationContext, loading the definitions
 	 * from the given XML file and automatically refreshing the context.
+	 * 创建一个新的ClassPathXmlApplicationContext，从给定的XML配置文件中加载定义信息并自动刷新上下文（applicationContext）
 	 * @param configLocation resource location
 	 * @throws BeansException if context creation failed
 	 */
@@ -137,8 +138,16 @@ public class ClassPathXmlApplicationContext extends AbstractXmlApplicationContex
 	public ClassPathXmlApplicationContext(
 			String[] configLocations, boolean refresh, @Nullable ApplicationContext parent)
 			throws BeansException {
-		// 调用父类构造方法，进行相关对象的创建工作
+		/**
+		 * 调用父类构造方法，进行相关对象(资源对象)的创建工作
+		 * 其中重要的几个点：
+		 * 1.创建了一个资源模式处理器(ResourcePatternResolver)来用解析资源配置文件
+		 * 2.给相应的ApplicationContext中的变量初始化（这些变量在后面刷新容器中需要使用，需要重点关注！！！）
+		 */
 		super(parent);
+		/**
+		 * 设置此应用上下文的配置路径
+		 */
 		setConfigLocations(configLocations);
 		if (refresh) {
 			refresh();
