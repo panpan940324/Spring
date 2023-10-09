@@ -115,6 +115,9 @@ public class PropertyPlaceholderHelper {
 	/**
 	 * Replaces all placeholders of format {@code ${name}} with the value returned
 	 * from the supplied {@link PlaceholderResolver}.
+	 * 将格式为${name}的占位符替换为从提供PlaceholderResolver返回的值
+	 * 值得注意的是：PlaceholderResolver是一个函数式接口，
+	 * 真正传入的是PropertySourcesPropertyResolver中的getPropertyAsRawString()方法
 	 * @param value the value containing the placeholders to be replaced
 	 * @param placeholderResolver the {@code PlaceholderResolver} to use for replacement
 	 * @return the supplied value with placeholders replaced inline
@@ -124,18 +127,30 @@ public class PropertyPlaceholderHelper {
 		return parseStringValue(value, placeholderResolver, null);
 	}
 
+	/**
+	 * 解析字符串中的占位符（重点方法）
+	 * 该方法使用了递归调用，能够解析多重占位符嵌套的字符串，例如：${username_${name}}
+	 *
+	 * @param value 带有占位符的字符串
+	 * @param placeholderResolver 函数式接口--从其中获取占位符替换后的值
+	 * @param visitedPlaceholders 已访问过的占位符集合
+	 * @return 替换完占位符之后的字符串
+	 */
 	protected String parseStringValue(
 			String value, PlaceholderResolver placeholderResolver, @Nullable Set<String> visitedPlaceholders) {
-
+		// 从value字符串中获取placeholderPrefix开头的index
 		int startIndex = value.indexOf(this.placeholderPrefix);
+		// 如果value字符串中没有包含placeholderPrefix，则表明该字符串中并没有占位符，直接返回。
 		if (startIndex == -1) {
 			return value;
 		}
 
 		StringBuilder result = new StringBuilder(value);
 		while (startIndex != -1) {
+			// 从value字符串中获取placeholderSuffix开头的index
 			int endIndex = findPlaceholderEndIndex(result, startIndex);
 			if (endIndex != -1) {
+				// 从占位符${name}中截取字符串为name获取占位符
 				String placeholder = result.substring(startIndex + this.placeholderPrefix.length(), endIndex);
 				String originalPlaceholder = placeholder;
 				if (visitedPlaceholders == null) {
@@ -146,9 +161,17 @@ public class PropertyPlaceholderHelper {
 							"Circular placeholder reference '" + originalPlaceholder + "' in property definitions");
 				}
 				// Recursive invocation, parsing placeholders contained in the placeholder key.
+				/**
+				 * 递归调用--获取镶嵌在里面的占位符placeholder
+				 */
 				placeholder = parseStringValue(placeholder, placeholderResolver, visitedPlaceholders);
 				// Now obtain the value for the fully resolved key...
+				/**
+				 * placeholderResolver是一个函数式接口，
+				 * 在解析配置路径中其传递的真实方法为PropertySourcesPropertyResolver中的getPropertyAsRawString()方法
+				 */
 				String propVal = placeholderResolver.resolvePlaceholder(placeholder);
+				// 如果propVal为空，但是值分割符不为空，则获取key，例如username:jack 获取key为username
 				if (propVal == null && this.valueSeparator != null) {
 					int separatorIndex = placeholder.indexOf(this.valueSeparator);
 					if (separatorIndex != -1) {
@@ -163,11 +186,16 @@ public class PropertyPlaceholderHelper {
 				if (propVal != null) {
 					// Recursive invocation, parsing placeholders contained in the
 					// previously resolved placeholder value.
+					/**
+					 * 获取的值，如果还包含占位符，还可以使用递归方法继续解析
+					 */
 					propVal = parseStringValue(propVal, placeholderResolver, visitedPlaceholders);
+					// 替换占位符
 					result.replace(startIndex, endIndex + this.placeholderSuffix.length(), propVal);
 					if (logger.isTraceEnabled()) {
 						logger.trace("Resolved placeholder '" + placeholder + "'");
 					}
+					// 从result中的startIndex + propVal.length()中在获取placeholderPrefix的index
 					startIndex = result.indexOf(this.placeholderPrefix, startIndex + propVal.length());
 				}
 				else if (this.ignoreUnresolvablePlaceholders) {
