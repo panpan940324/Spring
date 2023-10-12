@@ -185,12 +185,15 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	private long startupDate;
 
 	/** Flag that indicates whether this context is currently active. */
+	// 容器上下文处于活动状态的标志
 	private final AtomicBoolean active = new AtomicBoolean();
 
 	/** Flag that indicates whether this context has been closed already. */
+	// 容器上下文是否已经关闭的标志
 	private final AtomicBoolean closed = new AtomicBoolean();
 
 	/** Synchronization monitor for the "refresh" and "destroy". */
+	// 容器刷新和销毁的同步监视器--使用在refresh()方法中
 	private final Object startupShutdownMonitor = new Object();
 
 	/** Reference to the JVM shutdown hook, if registered. */
@@ -216,10 +219,12 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	private final Set<ApplicationListener<?>> applicationListeners = new LinkedHashSet<>();
 
 	/** Local listeners registered before refresh. */
+	// 刷新容器上下文之前注册的本地监听器集合（applicationListeners）
 	@Nullable
 	private Set<ApplicationListener<?>> earlyApplicationListeners;
 
 	/** ApplicationEvents published before the multicaster setup. */
+	// 事件多播器设置之前发布的事件集合
 	@Nullable
 	private Set<ApplicationEvent> earlyApplicationEvents;
 
@@ -635,6 +640,12 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	/**
 	 * Prepare this context for refreshing, setting its startup date and
 	 * active flag as well as performing any initialization of property sources.
+	 * 为刷新容器做一些准备工作
+	 * 1.设置容器的启动日期
+	 * 2.设置活跃标志
+	 * 3.初始化属性资源，方法为空，留给子类来实现
+	 * 4.创建并获取环境对象，验证需要的属性是否都已经放入到了环境中
+	 * 5.初始化容器刷新前的application监听器集合和application事件集合，都为空集合
 	 */
 	protected void prepareRefresh() {
 		// Switch to active.

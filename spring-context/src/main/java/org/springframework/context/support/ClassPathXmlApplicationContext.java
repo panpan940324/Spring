@@ -147,6 +147,8 @@ public class ClassPathXmlApplicationContext extends AbstractXmlApplicationContex
 		super(parent);
 		/**
 		 * 设置此应用上下文的配置路径
+		 * 1.创建一个标准环境类（new StandardEnvironment）
+		 * 2.解析配置路径中的占位符
 		 */
 		setConfigLocations(configLocations);
 		if (refresh) {
